@@ -3,6 +3,8 @@
 import pandas as pd
 from novel import Novel
 
+# REQUIRE: csv file
+# RETURN: list of Novel objects
 def csv_to_object_list(req):
     dfcsv = pd.read_csv(req)  # csv to dataframe
     novels = list()

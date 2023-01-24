@@ -9,23 +9,23 @@ class TestCsvToObject(unittest.TestCase):
 
     # check if it's a Novel
     def test_is_novel(self):
-        WEBSITE = "https://ncode.syosetu.com/novelview/infotop/ncode/n9629ex/"
+        LINK = "https://ncode.syosetu.com/novelview/infotop/ncode/n9629ex/"
         scraper = cloudscraper.create_scraper()
-        req = scraper.get(WEBSITE)
+        req = scraper.get(LINK)
         self.assertIsInstance(parse_syosetsu(req), Novel)
 
     # check if novel has the right title
     def test_title(self):
-        WEBSITE = "https://ncode.syosetu.com/novelview/infotop/ncode/n9629ex/"
+        LINK = "https://ncode.syosetu.com/novelview/infotop/ncode/n9407fu/"
         scraper = cloudscraper.create_scraper()
-        req = scraper.get(WEBSITE)
-        self.assertEqual(parse_syosetsu(req).title, "最弱テイマーはゴミ拾いの旅を始めました。")
+        req = scraper.get(LINK)
+        self.assertEqual(parse_syosetsu(req).title, "【書籍化】アルマーク   ～北の剣、南の杖～")
 
     # check if novel has the right url
     def test_url(self):
-        WEBSITE = "https://ncode.syosetu.com/novelview/infotop/ncode/n9629ex/"
+        LINK = "https://ncode.syosetu.com/novelview/infotop/ncode/n9629ex/"
         scraper = cloudscraper.create_scraper()
-        req = scraper.get(WEBSITE)
+        req = scraper.get(LINK)
         self.assertEqual(parse_syosetsu(
             req).link, "https://ncode.syosetu.com/novelview/infotop/ncode/n9629ex/")
 if __name__ == '__main__':

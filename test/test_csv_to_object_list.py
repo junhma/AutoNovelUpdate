@@ -1,7 +1,6 @@
-# ok
+#old
 
 import unittest
-from csv_to_object_list import csv_to_object_list
 
 class TestCsvToObject(unittest.TestCase):
     

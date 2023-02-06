@@ -1,9 +1,6 @@
-#ok
+# old
 
 import unittest
-from update_chapter import update_chapter
-from csv_to_object_list import csv_to_object_list
-
 
 class TestUpdateChapter(unittest.TestCase):
 

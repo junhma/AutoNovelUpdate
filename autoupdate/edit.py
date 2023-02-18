@@ -20,14 +20,19 @@ def convert(file, base_folder):
 def update(my_df):
     """Update the chapter of the dataframe, return the updated dataframe."""
     for i in range(my_df.shape[0]):
+        try:
+            link = my_df.loc[i, 'link']
+            parser = my_df.loc[i, 'parser']
 
-        link = my_df.loc[i, 'link']
-        parser = my_df.loc[i, 'parser']
+            updated_dictionary = choose(link, parser)
 
-        updated_dictionary = choose(link, parser)
+            if (updated_dictionary['latest_chapter'] != -1):
+                my_df.loc[i, 'latest_chapter'] = updated_dictionary['latest_chapter']
+            else:
+                print(my_df.loc[i, 'title'])
 
-        if (updated_dictionary['latest_chapter'] != -1):
-            my_df.loc[i, 'latest_chapter'] = updated_dictionary['latest_chapter']
+        except ValueError:
+            print(my_df.loc[i, 'title'])
 
     return my_df
 

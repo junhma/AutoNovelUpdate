@@ -1,9 +1,7 @@
 """Parsers for novel sites"""
-from pathlib import Path
 import re
 import cloudscraper
 from bs4 import BeautifulSoup as bs
-
 
 def syosetu(link):
     """Parser for syosetu.
@@ -66,19 +64,17 @@ def novel_updates(link):
         raise ValueError
 
     soup = bs(req.content, 'xml')
-
+    
     # split page in parts
     page = soup.find('div', class_ = "w-blog-content")
     body = page.find('div', class_ = "g-cols wpb_row offset_default")
+
     # "wpb_text_column " has a space at the end
     one_third = body.find('div',
                 class_ = "one-third").find('div',
                 class_ = "wpb_text_column ").find('div', 
                 class_ =  "wpb_wrapper")
-    two_thirds = body.find('div',
-                class_ = "two-thirds").find('div',
-                class_ = "wpb_text_column ").find('div',
-                class_ = "wpb_wrapper") 
+    
 
     # find title
     if (page.find('div', class_ = "seriestitlenu")):
@@ -91,9 +87,10 @@ def novel_updates(link):
         english_publisher = one_third.find('div',
                             id = "showepublisher").find('a').text
 
+
     # find latest chapter
-    if (two_thirds.find('table', id = "myTable")):
-        rel = two_thirds.find('table', id = "myTable").find('tbody').find('tr')
+    if (body.find('table', id = "myTable")):
+        rel = body.find('table', id = "myTable").find('tbody').find('tr')
         string = rel.select('td')[2].find('a').get('title')
         # find all the numbers in for example"c11-c12"
         nums = re.findall(r"\d+", string)
@@ -101,7 +98,7 @@ def novel_updates(link):
         latest_chapter = int(nums[-1])
     else:
         raise ValueError 
-             
+   
     updated_dictionary = {'title': title,
                           'latest_chapter': latest_chapter,
                           'link': req.url, 

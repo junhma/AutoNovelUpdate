@@ -1,7 +1,7 @@
 """Convert a csv file to dataframe and back to a csv file."""
-from pathlib import Path, PurePath
+from pathlib import PurePath
 import pandas as pd
-import autoupdate.web_parser as web_parser
+import web_parser
 
 def convert(file, base_folder):
     """Convert a csv file to dataframe and back to a csv file."""
@@ -10,7 +10,7 @@ def convert(file, base_folder):
     update(my_df)
 
     BASE_NAME = PurePath(file).name
-    out_path = Path(base_folder, BASE_NAME)
+    out_path = PurePath(base_folder, BASE_NAME)
 
     file = my_df.to_csv(out_path, mode='w+', sep = ',', 
                         header = True, index = False)  

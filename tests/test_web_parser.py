@@ -1,7 +1,7 @@
 """Unit tests for parsers."""
 
 import unittest
-import autoupdate.web_parser as web_parser
+import auto_update.web_parser as web_parser
 
 class TestWebParserSyosetu(unittest.TestCase):
     """Unit tests for syosetu parser."""
@@ -40,7 +40,7 @@ class TestWebParserNovelUpdates(unittest.TestCase):
         
     def test_latest_chapter(self):
         """Test if latest chapter matches."""
-        self.assertEqual(217, web_parser.novel_updates(
+        self.assertEqual(223, web_parser.novel_updates(
             self.LINK)["latest_chapter"])
     
     def test_english_publisher(self):

@@ -1,27 +1,27 @@
 """Unit tests for convert file format and update chapters."""
 
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePath
 import pandas as pd
-import autoupdate.edit as edit
+import auto_update.edit as edit
 
-# class TestConvert(unittest.TestCase):
-#     """Unit tests for convert file format."""
+class TestConvert(unittest.TestCase):
+    """Unit tests for convert file format."""
 
-#     BASE_FOLDER = Path(__file__).parent.resolve()
-#     BASE_NAME = r"test_novel.csv"
-#     BASE_NAME_NEW = r"test_novel_new.csv"
+    BASE_FOLDER = PurePath(Path.home(), "Documents/GitHub/autoupdate/tests")
+    BASE_NAME = r"test_novel.csv"
+    BASE_NAME_COMPARE = r"test_novel_compare.csv"
     
-#     file = Path(BASE_FOLDER, BASE_NAME)
-#     new_file = Path(BASE_FOLDER, BASE_NAME_NEW)
+    file = PurePath(BASE_FOLDER, BASE_NAME)
+    file_compare = PurePath(BASE_FOLDER, BASE_NAME_COMPARE)
 
-#     my_df_new = pd.read_csv(new_file)
+    df_compare = pd.read_csv(file_compare, sep = ',', on_bad_lines='skip')
 
-#     def test_convert(self):
-#         """Unit tests for convert file format."""
-#         edit.convert(self.file, self.BASE_FOLDER)
-#         my_df_out = pd.read_csv(self.file)
-#         self.assertTrue(self.my_df_new.equals(my_df_out))
+    def test_convert(self):
+        """Unit tests for convert csv to dataframe and back."""
+        edit.convert(self.file, self.BASE_FOLDER)
+        df = pd.read_csv(self.file, sep = ',', on_bad_lines='skip')
+        self.assertTrue(self.df_compare.equals(df))
 
 class TestUpdate(unittest.TestCase):
     """Unit tests for update chapters."""

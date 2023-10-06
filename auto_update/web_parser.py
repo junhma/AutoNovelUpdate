@@ -2,123 +2,97 @@
 import re
 
 import cloudscraper
+import requests
 from bs4 import BeautifulSoup as bs
-from auto_update.exceptions import Exception404, TitleNotFoundException, ChapterNotFoundException
+from requests import URLRequired
+from auto_update.exceptions import (ChapterNotFoundException,
+                                    TitleNotFoundException)
 
 
-def syosetu(link: str) -> dict[str]:
+def syosetuAPI(link: str) -> dict[str, str]:
     """
     Parser for https://ncode.syosetu.com/.
 
     :param link: a string of the link of the novel
     :return: a dictionary of the updated information of the novel
-    :raises Exception404: a 404 error from a request
-    :raises TitleNotFoundException: can't find title in soup
-    :raises ChapterNotFoundException: can't find chapter in soup
+    :raises HTTPError: HTTP error from a request
+    :raises URLRequired: unable to extract ncode from link
     """
 
-    title = "NA"
-    latest_chapter = -1
+    # Define a regular expression pattern to extract the ncode part
+    # example url: "https://ncode.syosetu.com/novelview/infotop/ncode/n3930eh/"
+    # We are trying to extract "n3930eh".
+    pattern = r'/ncode/([a-zA-Z0-9]+)/'
+    match = re.search(pattern, link)
 
-    scraper = cloudscraper.create_scraper()
-    req = scraper.get(link)
+    if match:
+        ncode = match.group(1)
+    else:
+        raise URLRequired
 
-    if req.status_code == 404:
-        raise Exception404
+    # Define the base URL
+    base_url = 'https://api.syosetu.com/novelapi/api/'
 
-    soup = bs(req.content, 'xml')
+    # Define GET parameters
+    out = 'json'
+    of = 't-ga'  # t: title, ga: total chapter number
 
-    # find title
-    try:
-        if (soup.find('meta',
-                    {'property': "og:title"})):
-            meta_title_tag = soup.find('meta', {'property': "og:title"})
-            title = meta_title_tag["content"]
-        else:
-            raise TitleNotFoundException
-    except AttributeError:
-            raise TitleNotFoundException
+    # Construct the URL with the parameters
+    url_with_params = f'{base_url}?out={out}&ncode={ncode}&of={of}'
 
-    # find latest chapter
-    try:
-        if (soup.find(string=re.compile("全\d?,?\d{1,3}部分"))): # string looks like "全1,145部分"
-            string = soup.find(string=re.compile("全\d?,?\d{1,3}部分"))
-            # The chapter number is a list like [1, 145], when it is more than 3 digits. 
-            # It is one number in a list like [145] when less.
-            nums = re.findall(r"\d+", string) # concatenate numbers in the list
-            latest_chapter = int("".join(nums))
-        else:
-            raise ChapterNotFoundException
-    except AttributeError:
-            raise ChapterNotFoundException
+    response = requests.get(url_with_params)
+    response.raise_for_status()  # Check for HTTP errors
 
+    # Store it in a dictionary
+    syosetu_data = response.json()
+
+    title = syosetu_data[1]['title']
+    latest_chapter = syosetu_data[1]['general_all_no']
     updated_dictionary = {'title': title,
-                          'latest_chapter': latest_chapter,
-                          'link': req.url}
+                          'latest_chapter': latest_chapter}
 
     return updated_dictionary
 
 
-def novel_updates(link: str) -> dict[str]:
+def novel_updates(link: str) -> dict[str, str]:
     """
     Parser for https://www.novelupdates.com/.
 
     :param link: a string of the link of the novel
     :return: a dictionary of the updated information of the novel
+    :raises HTTPError: HTTP error from a request
+    :raises TitleNotFoundException: can't find title in soup
+    :raises ChapterNotFoundException: can't find chapter in soup
     """
-
-    title = "NA"
-    latest_chapter = -1
-    english_publisher = "None"
 
     scraper = cloudscraper.create_scraper()
     req = scraper.get(link)
-    if req.status_code == 404:
-        raise Exception404
+    req.raise_for_status()
 
     soup = bs(req.content, 'xml')
 
-    # split page in parts
-    page = soup.find('div', class_="w-blog-content")
-    body = page.find('div', class_="g-cols wpb_row offset_default")
-
-    # "wpb_text_column " has a space at the end
-    one_third = body.find('div',
-                          class_="one-third").find('div',
-                                                   class_="wpb_text_column ").find('div',
-                                                                                   class_="wpb_wrapper")
-
     # find title
-    try:
-        if (page.find('div', class_="seriestitlenu")):
-            title = page.find('div', class_="seriestitlenu").text
-        else:
-            raise TitleNotFoundException
-    except AttributeError:
-            raise TitleNotFoundException
-
-    # find English publisher
-    if (one_third.find('div', id="showepublisher").find('a')):
-            english_publisher = one_third.find('div',
-                                            id="showepublisher").find('a').text
+    page = soup.find('div', class_="w-blog-content")
+    if page is None:
+        raise TitleNotFoundException
+    section = page.find('div', class_="seriestitlenu")
+    title = section.text if section else None
+    if title is None:
+        raise TitleNotFoundException
 
     # find latest chapter
     try:
-        if (body.find('table', id="myTable")):
-            rel = body.find('table', id="myTable").find('tbody').find('tr')
-            string = rel.select('td')[2].find('span').get('title')
-            # find all the numbers in for example"c11-c12"
-            nums = re.findall(r"\d+", string)
-            # choose the last number
-            latest_chapter = int(nums[-1])
-        else:
-            raise ChapterNotFoundException
+        body = page.find('div', class_="g-cols wpb_row offset_default")
+        table = body.find('table', id="myTable") if body else None
+        tr = table.find('tbody').find('tr') if table else None
+        string = str(tr.select('td')[2].find('span').get('title'))
+        # find all the numbers in for example"c11-c12", and choose the last number
+        nums = re.findall(r"\d+", string)
+        latest_chapter = int(nums[-1])
     except AttributeError:
-            raise ChapterNotFoundException
+        raise ChapterNotFoundException
 
     updated_dictionary = {'title': title,
-                          'latest_chapter': latest_chapter,
-                          'link': req.url,
-                          'english_publisher': english_publisher}
+                          'latest_chapter': latest_chapter}
 
     return updated_dictionary

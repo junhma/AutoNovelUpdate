@@ -1,12 +1,22 @@
 import logging
 from pathlib import Path, PurePath
 
-import auto_update.edit as edit
+import auto_update.csv_input as csv_input
 
-current_directory = Path.cwd()
-folder = current_directory / "data"
-BASE_NAME = r"reading lists - 小説.csv"
-file = PurePath(folder, BASE_NAME)
+def main():
+    #csv_input_main() # Uncomment for csv input
+    logging.shutdown()
 
-edit.auto_update(file)
-logging.shutdown()
+def csv_input_main():
+    """
+    Support for csv input. It gives the file to auto_update_csv.
+    Then saves an updated reading_lists_out.csv to the folder data.
+    """
+    current_directory = Path.cwd()
+    folder = current_directory / "data"
+    BASE_NAME = r"reading_list.csv" # Edit this to change file name
+    file = PurePath(folder, BASE_NAME)
+    csv_input.auto_update_csv(file)
+
+if __name__ == "__main__":
+  main()

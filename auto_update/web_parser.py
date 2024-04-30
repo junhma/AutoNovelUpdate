@@ -5,11 +5,10 @@ import cloudscraper
 import requests
 from bs4 import BeautifulSoup as bs
 from requests import URLRequired
-from auto_update.exceptions import (ChapterNotFoundException,
-                                    TitleNotFoundException)
+from auto_update.exceptions import (ChapterNotFoundException, NcodeNotFoundException)
 
 
-def syosetuAPI(link: str) -> dict[str, str]:
+def syosetuAPI(link: str) -> dict[str, int]:
     """
     Parser for https://ncode.syosetu.com/.
 
@@ -20,22 +19,23 @@ def syosetuAPI(link: str) -> dict[str, str]:
     """
 
     # Define a regular expression pattern to extract the ncode part
-    # example url: "https://ncode.syosetu.com/novelview/infotop/ncode/n3930eh/"
+    # example url: "https://ncode.syosetu.com/n3930eh/"
     # We are trying to extract "n3930eh".
-    pattern = r'/ncode/([a-zA-Z0-9]+)/'
+    pattern = r'/n\d{4}[a-zA-Z]*/$'
     match = re.search(pattern, link)
 
     if match:
-        ncode = match.group(1)
+        ncode_with_slash = match.group(0)
+        ncode = ncode_with_slash[1:-1]
     else:
-        raise URLRequired
-
+        raise NcodeNotFoundException
+    
     # Define the base URL
     base_url = 'https://api.syosetu.com/novelapi/api/'
 
     # Define GET parameters
     out = 'json'
-    of = 't-ga'  # t: title, ga: total chapter number
+    of = 'ga'  # t: title, ga: total chapter number
 
     # Construct the URL with the parameters
     url_with_params = f'{base_url}?out={out}&ncode={ncode}&of={of}'
@@ -46,15 +46,13 @@ def syosetuAPI(link: str) -> dict[str, str]:
     # Store it in a dictionary
     syosetu_data = response.json()
 
-    title = syosetu_data[1]['title']
     latest_chapter = syosetu_data[1]['general_all_no']
-    updated_dictionary = {'title': title,
-                          'latest_chapter': latest_chapter}
+    updated_dictionary = {'latest_chapter': latest_chapter}
 
     return updated_dictionary
 
 
-def novel_updates(link: str) -> dict[str, str]:
+def novel_updates(link: str) -> dict[str, int]:
     """
     Parser for https://www.novelupdates.com/.
 
@@ -71,17 +69,9 @@ def novel_updates(link: str) -> dict[str, str]:
 
     soup = bs(req.content, 'xml')
 
-    # find title
-    page = soup.find('div', class_="w-blog-content")
-    if page is None:
-        raise TitleNotFoundException
-    section = page.find('div', class_="seriestitlenu")
-    title = section.text if section else None
-    if title is None:
-        raise TitleNotFoundException
-
     # find latest chapter
     try:
+        page = soup.find('div', class_="w-blog-content")
         body = page.find('div', class_="g-cols wpb_row offset_default")
         table = body.find('table', id="myTable") if body else None
         tr = table.find('tbody').find('tr') if table else None
@@ -92,7 +82,6 @@ def novel_updates(link: str) -> dict[str, str]:
     except AttributeError:
         raise ChapterNotFoundException
 
-    updated_dictionary = {'title': title,
-                          'latest_chapter': latest_chapter}
+    updated_dictionary = {'latest_chapter': latest_chapter}
 
     return updated_dictionary

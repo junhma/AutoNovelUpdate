@@ -1,7 +1,16 @@
 autopep8
 beautifulsoup4
-cloudscraper
+#cloudscraper
 lxml
 pandas
 pycodestyle
 pylint
+oauth2client
+gspread
+google_auth_oauthlib
+#selenium
+nodriver
+aiohttp
+pyvirtualdisplay
+
+# sudo apt install xvfb x11-utils gnumeric

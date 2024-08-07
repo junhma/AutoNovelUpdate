@@ -3,7 +3,7 @@ import pandas as pd
 import unittest
 from pathlib import Path, PurePath
 
-class TestConvert(unittest.TestCase):
+class TestConvert(unittest.IsolatedAsyncioTestCase):
     """Unit tests for convert convert csv to dataframe and back."""
 
     current_directory = Path.cwd()
@@ -35,8 +35,8 @@ class TestConvert(unittest.TestCase):
         df = csv_input.csv_to_dataframe(self.file)
         self.assertTrue(self.DF_COMPARE.equals(df))
 
-    def test_auto_update(self):
+    async def test_auto_update(self):
         """Tests if the out file is created each time."""
-        csv_input.auto_update_csv(self.file)
+        await csv_input.auto_update_csv(self.file)
         path = Path('tests/test_novel_out.csv')
         self.assertTrue(path.exists())

@@ -1,6 +1,6 @@
 # AutoNovelUpdate
 
-Automatically update new novel chapters from and to a csv file
+Automatically update new novel chapters from and to a csv file. Currently support 小説家になろう(syosetu) and NovelUpdates.
 
 ## How to use csv input
 

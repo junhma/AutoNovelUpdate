@@ -5,22 +5,24 @@ Convert the returned DataFrame back to a csv file.
 
 from pathlib import PurePath
 import pandas as pd
+from pyvirtualdisplay.display import Display
 import auto_update.update as update
 
 
-def auto_update_csv(file: PurePath):
+async def auto_update_csv(file: PurePath):
     """
     Given a csv file with novel links and chapters, output a csv file with updated chapters in the same folder.
     For example, given new.csv, it would output new_out.csv.
 
     :param file: the PurePath of the input csv file
     """
-    my_df = csv_to_dataframe(file)
-    update.update_chapter(my_df)
+    df = csv_to_dataframe(file)
+    with Display(visible=False, size=(1080,720)):
+        df_new = await update.update_chapter(df)
     base_name = PurePath(file).stem
     output_file_name = base_name + "_out.csv"
     csv_path = PurePath(file.parent, output_file_name)
-    file = dataframe_to_csv(my_df, csv_path)
+    file = dataframe_to_csv(df_new, csv_path)
 
 
 def csv_to_dataframe(file: PurePath) -> pd.DataFrame:

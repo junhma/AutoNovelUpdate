@@ -5,6 +5,7 @@ Update the "latest_chapter" column of the Google sheet.
 import gspread
 import pandas as pd
 from pyvirtualdisplay.display import Display
+import nodriver as uc
 import auto_update.update as update
 import json
 
@@ -20,7 +21,8 @@ async def auto_update_google_sheet():
 
     df = pd.DataFrame(worksheet.get_all_records())
     with Display(visible=False, size=(1080,720)):
-        df_updated = await update.update_chapter(df)
+        browser = await uc.start(sandbox = False)
+        df_updated = await update.update_chapter(browser, df)
     df_updated_series = df_updated['latest_chapter'].fillna(0)
     df_updated_list = df_updated_series.to_list()
     # Find the column index where 'latest_chapter' is located

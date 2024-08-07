@@ -47,16 +47,16 @@ async def syosetuAPI(link: str) -> dict[str, int]:
     return updated_dictionary
 
 
-async def novel_updates(link: str) -> dict[str, int]:
+async def novel_updates(browser: uc.Browser, link: str) -> dict[str, int]:
     """
     Parser for https://www.novelupdates.com/.
 
+    :param browser: a browser session
     :param link: a string of the link of the novel
     :return: a dictionary of the updated information of the novel
     :raises ChapterNotFoundException: can't find chapter by css selector
     """
-    browser = await uc.start(sandbox = False)
-    tab = await browser.get(link)
+    tab = await browser.get(url = link, new_tab = True)
     try:
         css_selector = "#myTable > tbody:nth-child(2) > tr:nth-child(1) > td:nth-child(3) > span:nth-child(1)"
         tag = await tab.select(css_selector, timeout=500) 
@@ -70,16 +70,16 @@ async def novel_updates(link: str) -> dict[str, int]:
     updated_dictionary = {'latest_chapter': latest_chapter}
     return updated_dictionary
 
-async def book_walker(link: str) -> dict[str, int]:
+async def book_walker(browser: uc.Browser, link: str) -> dict[str, int]:
     """
     Parser for https://bookwalker.jp/.
 
+    :param browser: a browser session
     :param link: a string of the link of the novel
     :return: a dictionary of the updated information of the novel
     :raises ChapterNotFoundException: Cannot find chapter by css selector
     """
-    browser = await uc.start()
-    tab = await browser.get(link)
+    tab = await browser.get(url = link, new_tab = True)
     try:
         css_selector = ".overview-link > span:nth-child(1)"
         tag = await tab.select(css_selector, timeout=500) # a string that looks like <span>シリーズ14冊</span>"
@@ -96,16 +96,16 @@ async def book_walker(link: str) -> dict[str, int]:
     return updated_dictionary
 
 
-async def book_meter(link: str) -> dict[str, int]:
+async def book_meter(browser: uc.Browser, link: str) -> dict[str, int]:
     """
     Parser for https://bookmeter.com.
 
+    :param browser: a browser session
     :param link: a string of the link of the novel
     :return: a dictionary of the updated information of the novel
     :raises ChapterNotFoundException: can't find chapter by css selector
     """
-    browser = await uc.start()
-    tab = await browser.get(link)
+    tab = await browser.get(url = link, new_tab = True)
     try:
         css_selector = ".content__count"
         tag = await tab.select(css_selector, timeout=500)

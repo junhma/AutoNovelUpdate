@@ -6,6 +6,7 @@ Convert the returned DataFrame back to a csv file.
 from pathlib import PurePath
 import pandas as pd
 from pyvirtualdisplay.display import Display
+import nodriver as uc
 import auto_update.update as update
 
 
@@ -18,7 +19,8 @@ async def auto_update_csv(file: PurePath):
     """
     df = csv_to_dataframe(file)
     with Display(visible=False, size=(1080,720)):
-        df_new = await update.update_chapter(df)
+        browser = await uc.start(sandbox = False)
+        df_new = await update.update_chapter(browser, df)
     base_name = PurePath(file).stem
     output_file_name = base_name + "_out.csv"
     csv_path = PurePath(file.parent, output_file_name)

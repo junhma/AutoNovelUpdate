@@ -4,6 +4,7 @@ import unittest
 
 import asyncio
 from pyvirtualdisplay.display import Display
+import nodriver as uc
 import pandas as pd
 import logging
 from auto_update.exceptions import MissingParserException
@@ -17,8 +18,10 @@ class TestExceptionsUpdate(unittest.IsolatedAsyncioTestCase):
     async def test_no_parser(self):
         """Tests if MissingParserException is raised when it is supposed to."""
         with self.assertRaises(MissingParserException):
-            result = await pass_to_parser(self.LINK_NO_PARSER)
-            result["latest_chapter"]
+            with Display(visible=False, size=(1080,720)):
+                browser = await uc.start(sandbox = False)
+                result = await pass_to_parser(browser, self.LINK_NO_PARSER)
+                result["latest_chapter"]
 
 class TestUpdate(unittest.IsolatedAsyncioTestCase):
     """Unit tests for update chapters."""
@@ -40,7 +43,8 @@ class TestUpdate(unittest.IsolatedAsyncioTestCase):
     async def test_process_row(self):
         """Tests if the latest chapter is renewed correctly for a row."""
         with Display(visible=False, size=(1080,720)):
-            tasks = [asyncio.create_task(process_row(df_row, 0)) for df_row in self.df_row_list]
+            browser = await uc.start(sandbox = False)
+            tasks = [asyncio.create_task(process_row(browser, df_row, 0)) for df_row in self.df_row_list]
             results = await asyncio.gather(*tasks)
         self.assertEqual(702, results[0]["latest_chapter"])
         self.assertEqual(16, results[1]["latest_chapter"])
@@ -49,7 +53,8 @@ class TestUpdate(unittest.IsolatedAsyncioTestCase):
     async def test_update(self):
         """Tests if the latest chapter is renewed correctly."""
         with Display(visible=False, size=(1080,720)):
-            result = await update_chapter(self.DF)
+            browser = await uc.start(sandbox = False)
+            result = await update_chapter(browser, self.DF)
         self.assertEqual(702, result.loc[0, "latest_chapter"])
         self.assertEqual(16, result.loc[1, "latest_chapter"])
         self.assertEqual(40, result.loc[2, "latest_chapter"])
@@ -70,7 +75,8 @@ class TestPassToParser(unittest.IsolatedAsyncioTestCase):
     async def test_pass_to_parser(self):
         """Tests if the latest chapter is renewed correctly."""
         with Display(visible=False, size=(1080,720)):
-            tasks = [asyncio.create_task(pass_to_parser(link)) for link in self.links]
+            browser = await uc.start(sandbox = False)
+            tasks = [asyncio.create_task(pass_to_parser(browser, link)) for link in self.links]
             results = await asyncio.gather(*tasks)
         self.assertEqual(702, results[0]['latest_chapter'])
         self.assertEqual(214, results[1]['latest_chapter'])
@@ -85,8 +91,10 @@ class TestPassToParser(unittest.IsolatedAsyncioTestCase):
     async def test_no_parser_exception(self):
         """Tests if MissingParserException is raised when it is supposed to."""
         with self.assertRaises(MissingParserException) as context:
-            task_no_parser = asyncio.create_task(pass_to_parser(self.LINK_NO_PARSER))
-            await task_no_parser
+            with Display(visible=False, size=(1080,720)):
+                browser = await uc.start(sandbox = False)
+                task_no_parser = asyncio.create_task(pass_to_parser(browser, self.LINK_NO_PARSER))
+                await task_no_parser
         self.assertEqual('Missing parser', context.exception.msg)
 
 
@@ -121,7 +129,8 @@ class TestLog(unittest.IsolatedAsyncioTestCase):
         """Tests if the missing parser log is produced correctly."""
         with Display(visible=False, size=(1080,720)):
             with self.assertLogs(self.logger) as cm:
-                result = await update_chapter(self.df_no_parser)
+                browser = await uc.start(sandbox = False)
+                result = await update_chapter(browser, self.df_no_parser)
                 result.loc[0, "latest_chapter"]
         self.assertIn('Missing parser', cm.output[0])
         self.assertIn(self.ROW_NO_PARSER['title'], cm.output[0])
@@ -130,7 +139,8 @@ class TestLog(unittest.IsolatedAsyncioTestCase):
         """Tests if the ncode not found log is produced correctly."""
         with Display(visible=False, size=(1080,720)):
             with self.assertLogs(self.logger) as cm:
-                result = await update_chapter(self.df_ncode_not_found)
+                browser = await uc.start(sandbox = False)
+                result = await update_chapter(browser, self.df_ncode_not_found)
                 result.loc[0, "latest_chapter"]
         self.assertIn('Ncode not found', cm.output[0])
         self.assertIn(self.ROW_NCODE_NOT_FOUND['title'], cm.output[0])
@@ -139,7 +149,8 @@ class TestLog(unittest.IsolatedAsyncioTestCase):
         """Tests if the no chapter log is produced correctly."""
         with Display(visible=False, size=(1080,720)):
             with self.assertLogs(self.logger) as cm:
-                result = await update_chapter(self.df_no_chapter)
+                browser = await uc.start(sandbox = False)
+                result = await update_chapter(browser, self.df_no_chapter)
                 result.loc[0, "latest_chapter"]
         self.assertIn('No chapter number found', cm.output[0])
         self.assertIn(self.ROW_NO_CHAPTER['title'], cm.output[0])

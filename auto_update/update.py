@@ -3,15 +3,17 @@ import logging
 from typing import Optional, Dict
 import pandas as pd
 import asyncio
+import nodriver as uc
 from auto_update.web_parser import syosetuAPI, novel_updates, book_walker, book_meter
 from auto_update.exceptions import (ChapterNotFoundException,
                                     MissingParserException,
                                     NcodeNotFoundException)
 
-async def update_chapter(df: pd.DataFrame) -> pd.DataFrame:
+async def update_chapter(browser: uc.Browser, df: pd.DataFrame) -> pd.DataFrame:
     """
     Update the chapter of the DataFrame, return the updated DataFrame.
 
+    :param browser: a browser session
     :param df: the pandas Dataframe to be updated
     :return: the updated pandas Dataframe
     """
@@ -22,7 +24,7 @@ async def update_chapter(df: pd.DataFrame) -> pd.DataFrame:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    tasks = [process_row(df, i) for i in range(df.shape[0])]
+    tasks = [process_row(browser, df, i) for i in range(df.shape[0])]
     results = await asyncio.gather(*tasks)
     for result in results:
         index = result['index']
@@ -31,17 +33,18 @@ async def update_chapter(df: pd.DataFrame) -> pd.DataFrame:
             df.loc[index, 'latest_chapter'] = latest_chapter
     return df
 
-async def process_row(df: pd.DataFrame, index: int) -> Dict[str, Optional[int]]:
+async def process_row(browser: uc.Browser, df: pd.DataFrame, index: int) -> Dict[str, Optional[int]]:
     """
     Take a row of the DataFrame, return the updated latest chapter and index of the row as a dictionary.
 
+    :param browser: a browser session
     :param df: the row of the Dataframe to be updated
     :return: the updated latest chapter and index of the row as a dictionary.
     """
     logger = logging.getLogger(__name__)
     link = str(df.loc[index, 'link'])
     try:
-        updated_dictionary = await pass_to_parser(link)
+        updated_dictionary = await pass_to_parser(browser, link)
         return {"index": index, 'latest_chapter': updated_dictionary['latest_chapter']}
     except MissingParserException as e:
         error_message = f"{e.__class__.__name__}: {e.msg} - {df.loc[index, 'title']}"
@@ -60,10 +63,11 @@ async def process_row(df: pd.DataFrame, index: int) -> Dict[str, Optional[int]]:
         logger.exception(error_message)
         return {"index": index, 'latest_chapter': None}
 
-async def pass_to_parser(link: str) -> dict[str, int]:
+async def pass_to_parser(browser: uc.Browser, link: str) -> dict[str, int]:
     """
     Detect which parser to use based the link, then pass the link of the novel to web_parser.
 
+    :param browser: a browser session
     :param link: a string of the link of the novel
     :return: a dictionary of the updated information of the novel from web_parser
     :raises MissingParserException: no parser applies to the novel
@@ -73,13 +77,13 @@ async def pass_to_parser(link: str) -> dict[str, int]:
         updated_dictionary = await syosetuAPI(link)
     # Choose novel_updates if the link contains "novelupdates.com"
     elif "novelupdates.com" in link:
-        updated_dictionary = await novel_updates(link)
+        updated_dictionary = await novel_updates(browser, link)
     # Choose book_walker if the link contains "bookwalker.jp"
     elif "bookwalker.jp" in link:
-        updated_dictionary = await book_walker(link)
+        updated_dictionary = await book_walker(browser,link)
     # Choose book_meter if the link contains "bookmeter.com"
     elif "bookmeter.com" in link:
-        updated_dictionary = await book_meter(link)
+        updated_dictionary = await book_meter(browser,link)
     else:
         raise MissingParserException
     return updated_dictionary

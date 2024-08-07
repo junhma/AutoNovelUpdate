@@ -2,6 +2,7 @@
 
 import unittest
 
+import nodriver as uc
 import asyncio
 from pyvirtualdisplay.display import Display
 from auto_update.web_parser import syosetuAPI, novel_updates, book_walker, book_meter
@@ -17,7 +18,8 @@ class TestExceptionsParser(unittest.IsolatedAsyncioTestCase):
         """Tests if ChapterNotFoundException is raised when it is supposed to."""
         with self.assertRaises(ChapterNotFoundException):
             with Display(visible=False, size=(1080,720)):
-                await novel_updates(self.LINK_NO_CHAPTER)
+                browser = await uc.start(sandbox = False)
+                await novel_updates(browser, self.LINK_NO_CHAPTER)
     
     async def test_no_ncode(self):
         """Tests if NcodeNotFoundException is raised when it is supposed to."""
@@ -50,7 +52,8 @@ class TestWebParserNovelUpdates(unittest.IsolatedAsyncioTestCase):
     async def test_latest_chapter(self):
         """Tests if latest chapter matches."""
         with Display(visible=False, size=(1080,720)):
-            tasks = [asyncio.create_task(novel_updates(link)) for link in self.links]
+            browser = await uc.start(sandbox = False)
+            tasks = [asyncio.create_task(novel_updates(browser, link)) for link in self.links]
             results = await asyncio.gather(*tasks)
         self.assertEqual(40, results[0]["latest_chapter"])
         self.assertEqual(393, results[1]["latest_chapter"])
@@ -67,7 +70,8 @@ class TestWebParserBookWalker(unittest.IsolatedAsyncioTestCase):
     async def test_latest_chapter(self):
         """Tests if latest chapter matches."""
         with Display(visible=False, size=(1080,720)):
-            tasks = [asyncio.create_task(book_walker(link)) for link in self.links]
+            browser = await uc.start(sandbox = False)
+            tasks = [asyncio.create_task(book_walker(browser, link)) for link in self.links]
             results = await asyncio.gather(*tasks)
         self.assertEqual(14, results[0]["latest_chapter"])
         self.assertEqual(49, results[1]["latest_chapter"])
@@ -82,7 +86,8 @@ class TestWebParserBookMeter(unittest.IsolatedAsyncioTestCase):
     async def test_latest_chapter(self):
         """Tests if latest chapter matches."""
         with Display(visible=False, size=(1080,720)):
-            tasks = [asyncio.create_task(book_meter(link)) for link in self.links]
+            browser = await uc.start(sandbox = False)
+            tasks = [asyncio.create_task(book_meter(browser, link)) for link in self.links]
             results = await asyncio.gather(*tasks)
         self.assertEqual(16, results[0]["latest_chapter"])
         self.assertEqual(14, results[1]["latest_chapter"])

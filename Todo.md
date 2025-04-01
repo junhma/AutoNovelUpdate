@@ -1,0 +1,3 @@
+- Clean up and properly comment google sheet intergration code
+- Migrate database to SQL
+- Make a front-end hosted on github.io
